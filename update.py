@@ -25,10 +25,12 @@ try:
     image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
     draw = ImageDraw.Draw(image)
     current_time = time.strftime('%-I:%M')
-    draw.text((10, 0), current_time, font=ImageFont.truetype(font_path, 150), fill=0)
+    text_width, text_height = draw.textsize(current_time, font=ImageFont.truetype(font_path, 150))
+    draw.text(((epd.height - text_width) // 2, 20), current_time, font=ImageFont.truetype(font_path, 150), fill=0)
 
     current_date = time.strftime('%Y-%-m-%-d')
-    draw.text((100, 0), current_date, font=ImageFont.truetype(font_path, 30), fill=0)
+    text_width, text_height = draw.textsize(current_date, font=ImageFont.truetype(font_path, 30))
+    draw.text(((epd.height - text_width) // 2, 10), current_date, font=ImageFont.truetype(font_path, 30), fill=0)
 
     image = image.transpose(Image.ROTATE_270)
 
