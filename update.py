@@ -4,25 +4,34 @@ from _waveshare import show_image
 
 
 DIMENSIONS = (480, 800)
+FONT_PATH = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
 
-def make_full_image():
-    # Create an image and draw the current time on it using DejaVu Sans font
-    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    image = Image.new('1', DIMENSIONS, 255)  # 255: clear the frame
+def add_text_to_image(draw, text, size, location):
+    x, y = location
+    if x < 0:
+        text_width, text_height = draw.textsize(text,
+                                                font=ImageFont.truetype(FONT_PATH, size))
+        x = (DIMENSIONS[0] - text_width) // 2
+
+
+    draw.text((x, y), text, font=ImageFont.truetype(FONT_PATH, size), fill=0)
+    
+
+def main():
+    image = Image.new('1', DIMENSIONS, 255)
     draw = ImageDraw.Draw(image)
-    current_time = time.strftime('%-I:%M')
-    text_width, text_height = draw.textsize(current_time, font=ImageFont.truetype(font_path, 150))
-    draw.text(((DIMENSIONS[0] - text_width) // 2, 20), current_time, font=ImageFont.truetype(font_path, 150), fill=0)
-    
-    current_date = time.strftime('%a, %Y-%-m-%-d (%U)')
-    text_width, text_height = draw.textsize(current_date, font=ImageFont.truetype(font_path, 30))
-    draw.text(((DIMENSIONS[0] - text_width) // 2, 10), current_date, font=ImageFont.truetype(font_path, 30), fill=0)
-    
-    image = image.transpose(Image.ROTATE_270)
 
+    current_date = time.strftime('%a, %Y-%-m-%-d (%U)')
+    add_text_to_image(draw, current_date, 30, (-1, 10))
+
+    current_time = time.strftime('%-I:%M')
+    add_text_to_image(draw, current_time, 150, (-1, 20))
+
+    image = image.transpose(Image.ROTATE_270)
     show_image(image)
 
 
 if __name__ == "__main__":
-    make_full_image()
+    main()
+
