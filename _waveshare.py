@@ -4,7 +4,7 @@ import time
 from PIL import Image, ImageDraw, ImageFont
 
 
-IMAGE_ARCHIVE_PATH = "/home/pi/image_archives/"
+IMAGE_ARCHIVE_PATH = "/home/frame/image_archive/"
 MAX_ARCHIVED_IMAGES = 1440
 
 
@@ -16,7 +16,7 @@ def save_image_to_disk(image):
     image.transpose(Image.ROTATE_90).save(file_path)
 
 
-def delete_old_images():
+def purge_images():
     while True:
         existing_images = sorted(os.listdir(IMAGE_ARCHIVE_PATH))
         num_existing_images = len(existing_images)
@@ -31,11 +31,10 @@ def delete_old_images():
 
 def show_image(image):
     save_image_to_disk(image)
-    delete_old_images()
+    purge_images()
 
-    libdir = "/home/pi/Programming/e-Paper/RaspberryPi_JetsonNano/python/lib"
-    if os.path.exists(libdir):
-        sys.path.append(libdir)
+    libdir = "/home/frame/Programming/e-Paper/RaspberryPi_JetsonNano/python/lib"
+    sys.path.append(libdir)
     
     try:
         from waveshare_epd import epd7in5_V2
