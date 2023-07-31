@@ -1,5 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 import time
+import datetime
 from _waveshare import show_image
 
 
@@ -22,7 +23,9 @@ def main():
     image = Image.new('1', DIMENSIONS, 255)
     draw = ImageDraw.Draw(image)
 
-    current_date = time.strftime('%a, %Y-%-m-%-d (%U)')
+    current_date = time.strftime('%a, %Y-%-m-%-d')
+    week_number = datetime.datetime.now().isocalendar()[1]
+    current_date += ", Week " + str(week_number)
     add_text_to_image(draw, current_date, 30, (-1, 10))
 
     current_time = time.strftime('%-I:%M')
