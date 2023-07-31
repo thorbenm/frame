@@ -14,7 +14,7 @@ def _map(x, in_min, in_max, out_min, out_max):
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
-def scale_image_values(image, scale_black, scale_white):
+def image_contrast(image, scale_black, scale_white):
     def fun(x):
         fx = float(x)
         fx = _map(fx, scale_black, scale_white, 0.0, 255.0)
@@ -29,11 +29,11 @@ def get_yr():
     _waveshare.save_image_to_disk(full, "yr_full")
 
     current_conditions = full.crop((330, 270, full.width - 1000, full.height - 750))
-    current_conditions = scale_image_values(current_conditions, 100.0, 255.0)
+    current_conditions = image_contrast(current_conditions, 150.0, 255.0)
     _waveshare.save_image_to_disk(current_conditions, "yr_current_conditions")
 
     rain_graph = full.crop((1210, 250, full.width - 360, full.height - 740))
-    rain_graph = scale_image_values(rain_graph, 25.0, 255.0)
+    rain_graph = image_contrast(rain_graph, 150.0, 255.0)
     _waveshare.save_image_to_disk(rain_graph, "yr_rain_graph")
     return current_conditions, rain_graph
 
@@ -43,7 +43,7 @@ def get_sl():
     _waveshare.save_image_to_disk(tuletorg_full, "sl_tuletorg_full")
 
     tuletorg_cropped = tuletorg_full.crop((0, 1055, 480, 1100))
-    tuletorg_cropped = scale_image_values(tuletorg_cropped, 50.0, 240.0)
+    tuletorg_cropped = image_contrast(tuletorg_cropped, 100.0, 240.0)
 
     _waveshare.save_image_to_disk(tuletorg_cropped, "sl_tuletorg_cropped")
     return tuletorg_cropped
@@ -81,7 +81,7 @@ def main():
     image.paste(rain_graph, (0, 270))
 
     sl = get_sl()
-    image.paste(sl, (0, 500))
+    image.paste(sl, (0, 420))
 
     _waveshare.show_image(image)
 
