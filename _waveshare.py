@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+import datetime
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -8,12 +9,12 @@ IMAGE_ARCHIVE_PATH = "/home/frame/image_archive/"
 MAX_ARCHIVED_IMAGES = 1440
 
 
-def save_image_to_disk(image):
-    current_datetime = time.strftime('%Y_%m_%d__%H_%M_%S')
-    file_name = f"{current_datetime}.png"
+def save_image_to_disk(image, name):
+    current_datetime = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_%f')
+    file_name = f"{current_datetime}__{name}.png"
     file_path = os.path.join(IMAGE_ARCHIVE_PATH, file_name)
 
-    image.transpose(Image.ROTATE_90).save(file_path)
+    image.save(file_path)
 
 
 def purge_images():
@@ -30,7 +31,7 @@ def purge_images():
 
 
 def show_image(image):
-    save_image_to_disk(image)
+    save_image_to_disk(image, "final")
     purge_images()
 
     libdir = "/home/frame/Programming/e-Paper/RaspberryPi_JetsonNano/python/lib"
@@ -42,7 +43,7 @@ def show_image(image):
         epd.init()
         # epd.Clear()
     
-        epd.display(epd.getbuffer(image))
+        epd.display(epd.getbuffer(image.transpose(Image.ROTATE_270)))
         epd.sleep()
     
     except KeyboardInterrupt:
