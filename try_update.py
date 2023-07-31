@@ -4,7 +4,7 @@ import subprocess
 def run_update_script():
     try:
         completed_process = subprocess.run(
-            ["python", "update.py"],
+            ["python", "/home/pi/Programming/frame/update.py"],
             capture_output=True,
             text=True,
             check=True,
