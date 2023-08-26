@@ -4,6 +4,8 @@ import datetime
 import _waveshare
 from capture_website import capture_screenshot
 import numpy as np
+import traceback
+from timeout_decorator import timeout
 
 
 DIMENSIONS = (480, 800)
@@ -58,8 +60,9 @@ def add_text_to_image(draw, text, size, location):
 
 
     draw.text((x, y), text, font=ImageFont.truetype(FONT_PATH, size), fill=0)
-    
 
+
+@timeout(59)
 def main():
     image = Image.new('1', DIMENSIONS, 255)
     draw = ImageDraw.Draw(image)
@@ -86,6 +89,15 @@ def main():
     _waveshare.show_image(image)
 
 
+def try_main():
+    try:
+        main()
+    except Exception:
+        error_message = traceback.format_exc()
+        print(error_message)
+        _waveshare.show_text(error_message)
+
+
 if __name__ == "__main__":
-    main()
+    try_main()
 

@@ -49,15 +49,17 @@ def show_image(image):
     except KeyboardInterrupt:
         epd7in5_V2.epdconfig.module_exit()
         exit()
-    
 
-def show_text(text, font_size=12):
+
+def generate_image_from_text(text, dimensions=(480, 800), font_size=12):
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    image = Image.new('1', (480, 800), 255)
+    image = Image.new('1', dimensions, 255)
     draw = ImageDraw.Draw(image)
     draw.text((0, 0), text,
               font=ImageFont.truetype(font_path, font_size),
               fill=0)
+    return image
     
-    image = image.transpose(Image.ROTATE_270)
-    show_image(image)
+
+def show_text(text, font_size=12):
+    show_image(generate_image_from_text(text, font_size=font_size))
