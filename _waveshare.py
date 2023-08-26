@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 IMAGE_ARCHIVE_PATH = "/home/frame/image_archive/"
-MAX_ARCHIVED_IMAGES = 1440
+MAX_ARCHIVED_IMAGES = 50000
 
 
 def save_image_to_disk(image, name):
