@@ -6,6 +6,7 @@ from capture_website import capture_screenshot
 import numpy as np
 import traceback
 from timeout_decorator import timeout
+from _calendar import get_events, convert
 
 
 DIMENSIONS = (480, 800)
@@ -104,9 +105,9 @@ def get_sl_bus():
 
 def add_text_to_image(draw, text, size, location):
     x, y = location
+    text_width, text_height = draw.textsize(text,
+                                            font=ImageFont.truetype(FONT_PATH, size))
     if x < 0:
-        text_width, text_height = draw.textsize(text,
-                                                font=ImageFont.truetype(FONT_PATH, size))
         x = (DIMENSIONS[0] - text_width) // 2
 
 
@@ -165,7 +166,13 @@ def generate_image():
     image.paste(bus, (0, c))
     c += bus.size[1]
 
+    draw.line([(0, c), (DIMENSIONS[0] - 1, c)], fill=0, width=2)
+    c += 2
 
+    events = get_events()
+    for e in events[0:5]:
+        add_text_to_image(draw, e.name, 20, (240, c))
+        c += add_text_to_image(draw, convert(e.start) + ":", 20, (20, c))
 
     #
     _waveshare.save_image_to_disk(image, "wip")
