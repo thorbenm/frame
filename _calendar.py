@@ -21,7 +21,6 @@ def get_events():
     tz = timezone('Europe/Stockholm')
     
     current_time = datetime.now(tz)
-    print(current_time)
 
     ret = list()
     
@@ -53,38 +52,39 @@ def get_events():
 
 
 def convert(target_date):
-    now = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    difference = target_date.replace() - now
+    last_midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    difference = target_date.replace() - last_midnight
     days = difference.days
     seconds = difference.seconds
 
-    ret = "+"
-    ret += str(days)
-    ret += "d, "
-    if days < 1:
-        ret += "today"
+    ret = ""
+    if days == 0:
+        if int(target_date.strftine('%-H')) < 17:
+            ret += "today"
+        else:
+            ret += "tonight"
     elif days == 1:
-        ret += "tmrw"
-    else:
+        ret += "tomorrow"
+    elif days < 7:
         ret += target_date.strftime('%a').capitalize()
-    if target_date.strftime('%-H:%M') != "0:00":
-        ret += ", " + target_date.strftime('%-H:%M') 
-    # if days < 1:
-    #     ret = f"today, {target_date.strftime('%-H:%M')}"
-    # elif days == 1:
-    #     ret = f"tmrw, {target_date.strftime('%-H:%M')}"
-    # elif days < 7:
-    #     ret = f"{target_date.strftime('%a').capitalize()}, {target_date.strftime('%-H:%M')}"
-    # else:
-    #     ret = "+" + str(days) + "d, " + target_date.strftime('%a, %-H:%M') 
-    # if ret.endswith(" 0:00"):
-    #     ret = ret[0:-6]
+    else:
+        ret += target_date.strftime('%-m-%-d, ')
+        ret += target_date.strftime('%a').capitalize()
+        ret += " (" + str(days) + ")"
+
+    time = target_date.strftime('%-H:%M')
+    if time != "0:00":
+        ret += ", " + time 
+
     return ret
 
 
 if __name__ == "__main__":
-    for e in get_events():
-        print(f"Event: {e.name}")
-        print(f"Start: {e.start}")
-        print(f"Start (formatted): {convert(e.start)}")
-        print(f"End: {e.end}")
+    events = get_events()
+    max_start_length = max(len(convert(e.start)) for e in events)
+
+    for e in events:
+        start = convert(e.start)
+        padding = " " * (max_start_length - len(start))
+        print(start + ":" + padding + " " + e.name)
+

@@ -7,6 +7,22 @@ from PIL import Image, ImageDraw, ImageFont
 
 IMAGE_ARCHIVE_PATH = "/home/frame/image_archive/"
 MAX_ARCHIVED_IMAGES = 50000
+FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+DIMENSIONS = (480, 800)
+
+
+def _map(x, in_min, in_max, out_min, out_max):
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+
+def image_contrast(image, scale_black, scale_white):
+    def fun(x):
+        fx = float(x)
+        fx = _map(fx, scale_black, scale_white, 0.0, 255.0)
+        fx = min(fx, 255.0)
+        fx = max(fx, 0.0)
+        return round(fx)
+    return image.point(fun, "L")
 
 
 def save_image_to_disk(image, name):
@@ -51,12 +67,13 @@ def show_image(image):
         exit()
 
 
-def generate_image_from_text(text, dimensions=(480, 800), font_size=12):
-    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+def generate_image_from_text(text, dimensions=None, font_size=12):
+    if dimensions is None:
+        dimensions = DIMENSIONS
     image = Image.new('1', dimensions, 255)
     draw = ImageDraw.Draw(image)
     draw.text((0, 0), text,
-              font=ImageFont.truetype(font_path, font_size),
+              font=ImageFont.truetype(FONT, font_size),
               fill=0)
     return image
     
