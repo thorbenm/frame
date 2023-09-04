@@ -46,6 +46,7 @@ def get_events():
             e.end = event_end.replace(tzinfo=None)
             ret.append(e)
 
+
     ret = sorted(ret, key=lambda x: x.start)
 
     return ret
@@ -59,14 +60,15 @@ def convert(target_date):
 
     ret = ""
     if days == 0:
-        if int(target_date.strftine('%-H')) < 17:
-            ret += "today"
+        if int(target_date.strftime('%-H')) < 17:
+            ret += "Today"
         else:
-            ret += "tonight"
+            ret += "Tonight"
     elif days == 1:
-        ret += "tomorrow"
+        ret += "Tomorrow"
     elif days < 7:
         ret += target_date.strftime('%a').capitalize()
+        ret += " (" + str(days) + ")"
     else:
         ret += target_date.strftime('%-m-%-d, ')
         ret += target_date.strftime('%a').capitalize()
