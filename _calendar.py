@@ -20,7 +20,7 @@ def get_events():
 
     tz = timezone('Europe/Stockholm')
     
-    current_time = datetime.now(tz)
+    current_time = datetime.now(tz).replace(tzinfo=None)
 
     ret = list()
     
@@ -38,14 +38,17 @@ def get_events():
             event_end = event_end.replace(tzinfo=tz)
         elif isinstance(event_end, date):
             event_end = datetime.combine(event_end, datetime.min.time(), tz)
+
+        threshold = min(event_start.replace(hour=23, minute=59), event_end)
+        threshold = threshold.replace(tzinfo=None)
     
-        if event_start > current_time:
+        if current_time < threshold:
             e = lambda: None
             e.name = event.get('summary')
+            e.name = e.name[0].capitalize() + e.name[1:]
             e.start = event_start.replace(tzinfo=None)
             e.end = event_end.replace(tzinfo=None)
             ret.append(e)
-
 
     ret = sorted(ret, key=lambda x: x.start)
 
@@ -68,11 +71,11 @@ def convert(target_date):
         ret += "Tomorrow"
     elif days < 7:
         ret += target_date.strftime('%a').capitalize()
-        ret += " (" + str(days) + ")"
+        ret += " (+" + str(days) + ")"
     else:
         ret += target_date.strftime('%-m-%-d, ')
         ret += target_date.strftime('%a').capitalize()
-        ret += " (" + str(days) + ")"
+        ret += " (+" + str(days) + ")"
 
     time = target_date.strftime('%-H:%M')
     if time != "0:00":
