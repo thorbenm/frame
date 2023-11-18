@@ -1,18 +1,18 @@
 import requests
 from icalendar import Calendar
 from urllib.parse import urlparse
-from datetime import datetime, date
-from personal_data import webcal_url
+from datetime import datetime, date, timedelta
+from personal_data import family_calendar, anne_calendar
 from pytz import timezone
 from dateutil.rrule import rrulestr
 
 
-def get_events():
-    url_parts = urlparse(webcal_url)
+def get_events(url=None):
+    url_parts = urlparse(url)
     if url_parts.scheme == "webcal":
         http_url = f"https://{url_parts.netloc}{url_parts.path}"
     else:
-        http_url = webcal_url
+        http_url = url
     
     response = requests.get(http_url)
     calendar_data = response.text
@@ -51,13 +51,12 @@ def get_events():
                 e.start = occurrences.replace(tzinfo=None)
                 e.end = (occurrences + (event_end - event_start)).replace(tzinfo=None)
 
-                counter = 0
+                counter = -1
                 while occurrences is not None and counter <= 100:
                     counter += 1
                     occurrences = rule.after(occurrences)
 
-                if 0 < counter:
-                    e.name += " (+" + str(counter) + ")"
+                e.name += " (+" + str(counter) + ")"
 
                 ret.append(e)
         else:
@@ -110,12 +109,47 @@ def convert(target_date):
     return ret
 
 
-if __name__ == "__main__":
-    events = get_events()
-    max_start_length = max(len(convert(e.start)) for e in events)
+def shifts(nof_days=8):
+    current_date = datetime.now()
+    list_dates = []
+    list_dates.append(current_date.replace(hour=0, minute=0, second=0, microsecond=0))
+    for _ in range(nof_days - 1):
+        current_date += timedelta(days=1)
+        list_dates.append(current_date.replace(hour=0, minute=0, second=0, microsecond=0))
 
+    events = get_events(anne_calendar)
+    list_shifts = list()
+    for d in list_dates:
+        for j in events:
+            if j.start == d:
+                # list_shifts.append(j.name[:2].lower().capitalize())
+                list_shifts.append(j.name[0].upper())
+                break
+        else:
+            list_shifts.append("L")
+
+    # while 23 < len(ret):
+    #     ret = ", ".join(ret.split(", ")[:-1])
+
+    ret = ""
+
+    for d, s in zip(list_dates, list_shifts):
+        ret += d.strftime("%a")[:2] + ": " + s + ", "
+
+    return ret[4:-2]
+
+
+def print_events(events):
+    max_start_length = max(len(convert(e.start)) for e in events)
     for e in events:
         start = convert(e.start)
         padding = " " * (max_start_length - len(start))
         print(start + ":" + padding + " " + e.name)
 
+
+if __name__ == "__main__":
+    print_events(get_events(family_calendar))
+    print("")
+    print_events(get_events(anne_calendar))
+    print("")
+    print(shifts())

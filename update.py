@@ -9,6 +9,7 @@ import _calendar
 import _yr
 import _sl
 import ephem
+from personal_data import family_calendar, anne_calendar
 
 
 class ImageGenerator():
@@ -25,9 +26,9 @@ class ImageGenerator():
     def move_cursor_to_previous_position(self):
         self.cursor = self.previous_cursor
 
-    def add_text_to_image(self, text, size, x=None, y=None):
+    def add_text_to_image(self, text, size, x=None, y=None, line_spacing=1.1):
         f = ImageFont.truetype(_waveshare.FONT, size)
-        width, height = self.draw.textsize(text, font=f)
+        width, _ = self.draw.textsize(text, font=f)
 
         if x is None:
             # horizontally centered
@@ -36,7 +37,7 @@ class ImageGenerator():
             y = self.cursor
 
         self.draw.text((x, y), text, font=f, fill=0)
-        self.move_cursor(height)
+        self.move_cursor(round(line_spacing * size))
 
     def add_line(self, thickness=2):
         self.draw.line([(0, self.cursor), (_waveshare.DIMENSIONS[0] - 1, self.cursor)],
@@ -49,12 +50,27 @@ class ImageGenerator():
         current_date += ", Week " + str(week_number)
 
         self.add_text_to_image(current_date, 30)
-        self.move_cursor(-20)
+        self.move_cursor(-25)  # WTF?
 
         current_time = (datetime.datetime.now() + datetime.timedelta(minutes=1)).strftime('%H:%M')
         # its actually the time + 1 minute because we start the process early
-        self.add_text_to_image(current_time, 150)
-        self.move_cursor(8)
+        self.add_text_to_image(current_time, 150, line_spacing=1.0)
+
+    def get_sunset_diff(self):
+        current_date = datetime.datetime.now().strftime('%Y-%m-%d')
+        yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+        stockholm = ephem.city('Stockholm')
+        sunset = ephem.localtime(stockholm.next_setting(ephem.Sun(), current_date))
+        sunset_yesterday = ephem.localtime(stockholm.next_setting(ephem.Sun(), yesterday))
+        sunset_yesterday = sunset_yesterday + datetime.timedelta(days=1)
+        sunset_diff = abs(sunset - sunset_yesterday)
+
+        if sunset_yesterday < sunset:
+            sign = "+"
+        else:
+            sign = "-"
+
+        return sign + (datetime.datetime(1970, 1, 1) + sunset_diff).strftime('%-M\' %S"')
 
     def add_sunrise_sunset(self):
         current_date = datetime.datetime.now().strftime('%Y-%m-%d')
@@ -66,14 +82,18 @@ class ImageGenerator():
 
         self.add_text_to_image("Sunrise: " + sunrise, 17, x=10)
         self.move_cursor_to_previous_position()
-        self.add_text_to_image("Sunset: " + sunset, 17, x=240)
+        self.add_text_to_image("Sunset: " + sunset + " (" +
+                               self.get_sunset_diff() + ")", 17, x=240)
 
     def add_calendar_events(self):
-        events = _calendar.get_events()
-        for e in events[0:5]:
+        events = _calendar.get_events(family_calendar)
+        for e in events[0:4]:
             self.add_text_to_image(e.name, 17, x=240)
             self.move_cursor_to_previous_position()
             self.add_text_to_image(_calendar.convert(e.start) + ":", 17, x=10)
+
+    def add_shifts(self):
+        self.add_text_to_image(_calendar.shifts(), 17, x=10)
 
     def add_weather(self):
         current_conditions, rain_graph = _yr.get_current_weather()
@@ -106,25 +126,33 @@ class ImageGenerator():
         separator = 5
 
         self.move_cursor(separator)
+
         self.add_date_and_time()
         self.move_cursor(separator)
+
         self.add_line()
         self.move_cursor(separator)
+
+        self.add_shifts()
+        self.add_sunrise_sunset()
+        self.move_cursor(separator)
+
+        self.add_line()
+        self.move_cursor(separator)
+
         self.add_calendar_events()
         self.move_cursor(separator)
+
         self.add_line()
         self.move_cursor(separator)
+
         self.add_weather()
         self.move_cursor(separator)
-        self.add_sunrise_sunset()
-        self.move_cursor(round(separator * 1.5))
+
         self.add_line()
         self.move_cursor(separator)
-        self.add_public_transport()
 
-        #
-        _waveshare.save_image_to_disk(self.image, "wip")
-        #
+        self.add_public_transport()
 
         return self.image
 
