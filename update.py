@@ -10,6 +10,7 @@ import _yr
 import _sl
 import ephem
 from personal_data import family_calendar, anne_calendar
+from random import sample
 
 
 class ImageGenerator():
@@ -109,17 +110,34 @@ class ImageGenerator():
         self.move_cursor(forecast.size[1])
 
     def add_public_transport(self):
-        tunnelbana = _sl.get_tunnelbana()
-        self.image.paste(tunnelbana, (0, self.cursor))
-        self.move_cursor(tunnelbana.size[1])
+        d = _sl.get_data()
+        kungstradgarden = "Kungsträdgården"
+        vasterhaninge = "Västerhaninge"
+        tunnelbana = next(filter(lambda x: x.destination == kungstradgarden, d), None)
+        pendel = next(filter(lambda x: x.destination == vasterhaninge, d), None)
+        buss = next(filter(lambda x: x.destination == "Rissne", d), None)
 
-        pendel = _sl.get_pendel()
-        self.image.paste(pendel, (0, self.cursor))
-        self.move_cursor(pendel.size[1])
+        if tunnelbana is not None:
+            d.remove(tunnelbana)
+        if pendel is not None:
+            d.remove(pendel)
+        if buss is not None:
+            d.remove(buss)
+        r = sample(d, 4 + sum([j is None for j in [tunnelbana, pendel, buss]]))
 
-        bus = _sl.get_bus()
-        self.image.paste(bus, (0, self.cursor))
-        self.move_cursor(bus.size[1])
+        def add_element(d):
+            if d is not None:
+                self.add_text_to_image(d.destination[:15] + " (" +
+                                       d.number + "):", 17, x=10)
+                self.move_cursor_to_previous_position()
+                self.add_text_to_image(d.times, 17, x=240)
+
+        add_element(tunnelbana)
+        add_element(pendel)
+        add_element(buss)
+        for rr in r:
+            add_element(rr)
+
 
     def generate_image(self):
 
