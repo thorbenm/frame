@@ -110,37 +110,34 @@ class ImageGenerator():
         self.move_cursor(forecast.size[1])
 
     def add_public_transport(self):
-        d = _sl.get_data()
+        data = _sl.get_data()
+        show = list()
+
         kungstradgarden = "Kungsträdgården"
-        vasterhaninge = "Västerhaninge"
-        tunnelbana = next(filter(lambda x: x.destination == kungstradgarden, d), None)
-        pendel = next(filter(lambda x: x.destination == vasterhaninge, d), None)
-        buss = next(filter(lambda x: x.destination == "Rissne", d), None)
+        balsta = "Bålsta"
+        kungsangen = "Kungsängen"
+        kallhall = "Kallhäll"
 
-        if tunnelbana is not None:
-            d.remove(tunnelbana)
-        if pendel is not None:
-            d.remove(pendel)
-        if buss is not None:
-            d.remove(buss)
-        r = sample(d, 4 + sum([j is None for j in [tunnelbana, pendel, buss]]))
+        show.extend(list(filter(lambda x: x.destination == kungstradgarden, data)))
+        show.extend(list(filter(lambda x: x.number in ["43", "43X", "44", "44X"] and not x.destination in [balsta, kungsangen, kallhall], data)))
+        show.extend(list(filter(lambda x: x.destination == "Rissne", data)))
 
-        def add_element(d):
-            if d is not None:
-                self.add_text_to_image(d.destination[:15] + " (" +
-                                       d.number + "):", 17, x=10)
-                self.move_cursor_to_previous_position()
-                self.add_text_to_image(d.times, 17, x=240)
+        data = list(filter(lambda x: x not in show, data))
 
-        add_element(tunnelbana)
-        add_element(pendel)
-        add_element(buss)
-        for rr in r:
-            add_element(rr)
+        total_number_of_elements = 7
+        add_elements = total_number_of_elements - len(show)
+        if len(data) <= add_elements:
+            show.extend(data)
+        else:
+            show.extend(sample(data, add_elements))
+
+        for s in show:
+            self.add_text_to_image(f"{s.destination[:15]} ({s.number}):", 17, x=10)
+            self.move_cursor_to_previous_position()
+            self.add_text_to_image(s.times, 17, x=240)
 
 
     def generate_image(self):
-
         separator = 5
 
         self.move_cursor(separator)
