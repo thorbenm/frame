@@ -122,21 +122,12 @@ def shifts(nof_days=8):
     for d in list_dates:
         for j in events:
             if j.start == d:
-                # list_shifts.append(j.name[:2].lower().capitalize())
                 list_shifts.append(j.name[0].upper())
                 break
         else:
             list_shifts.append("L")
 
-    # while 23 < len(ret):
-    #     ret = ", ".join(ret.split(", ")[:-1])
-
-    ret = ""
-
-    for d, s in zip(list_dates, list_shifts):
-        ret += d.strftime("%a")[:2] + ": " + s + ", "
-
-    return ret[4:-2]
+    return list_shifts
 
 
 def print_events(events):

@@ -1,8 +1,9 @@
-from capture_website import capture_screenshot
+from capture_website import capture_screenshot, capture_text
 from _waveshare import save_image_to_disk, image_contrast
+import re
 
 
-def get_current_weather():
+def get_current_weather_image():
     full = capture_screenshot("https://www.yr.no/en/forecast/daily-table/2-2670879/Sweden/Stockholm/Sundbyberg%20Municipality/Sundbyberg")
     save_image_to_disk(full, "yr_full")
 
@@ -18,12 +19,41 @@ def get_current_weather():
     return current_conditions, rain_graph
 
 
-def get_short_forecast():
+def get_short_forecast_image():
     full = capture_screenshot("https://www.yr.no/en/forecast/graph/2-2670879/Sweden/Stockholm/Sundbyberg%20Municipality/Sundbyberg", size="495x1100")
     save_image_to_disk(full, "yr_full2")
 
-    forecast = full.crop((0, 351, 480, 518))
+    forecast = full.crop((0, 361, 480, 528))
     forecast = image_contrast(forecast, 180.0, 245.0)
     save_image_to_disk(forecast, "yr_forecast")
 
     return forecast
+
+
+def get_long_forecast_text():
+    text = capture_text("https://www.yr.no/en/forecast/daily-table/2-2670879/Sweden/Stockholm/Sundbyberg%20Municipality/Sundbyberg")
+
+    pattern = re.compile(
+        r'([A-Za-z]+ \d+ [A-Za-z]+)\.\s*'  # Date
+        r'Maximum minimum temperature:\s*'
+        r'(\d+°/\d+°)\s*'  # Temperature high/low
+        r'(?:Precipitation\s*'
+        r'(\d+\.\d+mm)\s*)?'  # Precipitation
+        r'Wind:\s*'
+        r'(\d+)\s*m/s'  # Wind
+    , re.MULTILINE)
+
+    matches = pattern.findall(text)
+
+    ret = list()
+    for match in matches:
+        element = lambda: None
+        date, temp_high_low, precipitation, wind = match
+        if not precipitation:
+            precipitation = "0mm"
+        element.date = date
+        element.temp_high_low = temp_high_low
+        element.precipitation = precipitation
+        element.wind = wind
+        ret.append(element)
+    return ret

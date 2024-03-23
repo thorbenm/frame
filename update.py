@@ -25,7 +25,7 @@ class ImageGenerator():
         self.cursor += movement
 
     def move_cursor_to_previous_position(self):
-        self.cursor = self.previous_cursor
+        self.cursor, self.previous_cursor = self.previous_cursor, self.cursor
 
     def add_text_to_image(self, text, size, x=None, y=None, line_spacing=1.1):
         f = ImageFont.truetype(_waveshare.FONT, size)
@@ -93,11 +93,25 @@ class ImageGenerator():
             self.move_cursor_to_previous_position()
             self.add_text_to_image(_calendar.convert(e.start) + ":", 17, x=10)
 
-    def add_shifts(self):
-        self.add_text_to_image(_calendar.shifts(), 17, x=10)
+    def add_week(self):
+        height = 45
+        font_offset = 5
+
+        w = _yr.get_long_forecast_text()
+        c = self.cursor
+        s = _calendar.shifts()
+        for j in range(8):
+            self.draw.rectangle([j*60, c, (j+1) * 60 + 1, c + height],
+                                outline="black", width=2)
+            self.add_text_to_image((datetime.datetime.now() + datetime.timedelta(days=j)).strftime('%a') + ": " + s[j], 13, x=font_offset+j*60)
+            self.add_text_to_image(w[j].temp_high_low, 13, x=font_offset+j*60)
+            self.add_text_to_image(w[j].precipitation, 13, x=font_offset+j*60)
+            self.cursor = c
+
+        self.cursor = c + height
 
     def add_weather(self):
-        current_conditions, rain_graph = _yr.get_current_weather()
+        current_conditions, rain_graph = _yr.get_current_weather_image()
 
         self.image.paste(current_conditions, (0, self.cursor))
         self.move_cursor(current_conditions.size[1])
@@ -105,7 +119,7 @@ class ImageGenerator():
         self.image.paste(rain_graph, (0, self.cursor))
         self.move_cursor(rain_graph.size[1])
 
-        forecast = _yr.get_short_forecast()
+        forecast = _yr.get_short_forecast_image()
         self.image.paste(forecast, (0, self.cursor))
         self.move_cursor(forecast.size[1])
 
@@ -124,7 +138,7 @@ class ImageGenerator():
 
         data = list(filter(lambda x: x not in show, data))
 
-        total_number_of_elements = 7
+        total_number_of_elements = 6
         add_elements = total_number_of_elements - len(show)
         if len(data) <= add_elements:
             show.extend(data)
@@ -145,10 +159,9 @@ class ImageGenerator():
         self.add_date_and_time()
         self.move_cursor(separator)
 
-        self.add_line()
+        self.add_week()
         self.move_cursor(separator)
 
-        self.add_shifts()
         self.add_sunrise_sunset()
         self.move_cursor(separator)
 
