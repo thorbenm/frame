@@ -1,4 +1,4 @@
-from capture_website import capture_screenshot, capture_text
+from capture_website import capture_screenshot, capture_text, capture_pdf
 from _waveshare import save_image_to_disk, image_contrast
 import re
 
@@ -53,7 +53,34 @@ def get_long_forecast_text():
             precipitation = "0mm"
         element.date = date
         element.temp_high_low = temp_high_low
+
+        precipitation = precipitation.removesuffix("mm")
+        precipitation = str(round(float(precipitation)))
+
         element.precipitation = precipitation
         element.wind = wind
         ret.append(element)
+    return ret
+
+
+def get_long_forecast_icons():
+    full = capture_pdf("https://www.yr.no/en/print/forecast/2-2670879/Sweden/Stockholm/Sundbyberg%20Municipality/Sundbyberg")
+    full = full.convert("L")
+    save_image_to_disk(full, "long_forecast_full")
+    offset_x = 632
+    offset_y = 1342
+    element_size_x = 60
+    element_size_y = 60
+    separation_y = 23.5
+    ret = []
+    for j in range(8):
+        left = offset_x
+        top = offset_y + round(j * (element_size_y + separation_y))
+        right = left + element_size_x
+        bottom = top + element_size_y
+        icon = full.crop((left, top, right, bottom))
+        icon = image_contrast(icon, 200.0, 255.0)
+        icon = icon.resize((30, 30))
+        ret.append(icon)
+        save_image_to_disk(ret[-1], "long_forecast_icon_" + str(len(ret)))
     return ret

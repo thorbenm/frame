@@ -9,7 +9,7 @@ import _calendar
 import _yr
 import _sl
 import ephem
-from personal_data import family_calendar, anne_calendar
+from personal_data import family_calendar
 from random import sample
 
 
@@ -19,6 +19,7 @@ class ImageGenerator():
         self.draw = ImageDraw.Draw(self.image)
         self.cursor = 0
         self.previous_cursor = 0
+        self.family_calendar_events = _calendar.get_events(family_calendar)
 
     def move_cursor(self, movement):
         self.previous_cursor = self.cursor
@@ -87,28 +88,66 @@ class ImageGenerator():
                                self.get_sunset_diff() + ")", 17, x=240)
 
     def add_calendar_events(self):
-        events = _calendar.get_events(family_calendar)
-        for e in events[0:4]:
+        for e in self.family_calendar_events[0:4]:
             self.add_text_to_image(e.name, 17, x=240)
             self.move_cursor_to_previous_position()
             self.add_text_to_image(_calendar.convert(e.start) + ":", 17, x=10)
 
     def add_week(self):
-        height = 45
-        font_offset = 5
+        rectangle_height = 60
+        font_offset_x = 5
+        font_offset_y = 3
+        font_size = 14
+        icon_offset_x = 30
+        icon_offset_y = 31
 
         w = _yr.get_long_forecast_text()
+        i = _yr.get_long_forecast_icons()
         c = self.cursor
         s = _calendar.shifts()
+
         for j in range(8):
-            self.draw.rectangle([j*60, c, (j+1) * 60 + 1, c + height],
-                                outline="black", width=2)
-            self.add_text_to_image((datetime.datetime.now() + datetime.timedelta(days=j)).strftime('%a') + ": " + s[j], 13, x=font_offset+j*60)
-            self.add_text_to_image(w[j].temp_high_low, 13, x=font_offset+j*60)
-            self.add_text_to_image(w[j].precipitation, 13, x=font_offset+j*60)
+            dt = datetime.datetime.now() + datetime.timedelta(days=j)
+            weekday = dt.strftime('%a')[:2]
+            day_in_month = dt.strftime('%-d')
+            weekend = weekday[0] == "S"
+
+            self.image.paste(i[j], (j * 60 + icon_offset_x, c + icon_offset_y))
+
+            rectangle_x0 = j * 60
+            rectangle_y0 = c
+            rectangle_x1 = rectangle_x0 + 60 + 1
+            rectangle_y1 = rectangle_y0 + rectangle_height
+            if j == 7:
+                rectangle_x1 -= 2
+
+            width = 2
+            if weekend:
+                width = 4
+            self.draw.rectangle([rectangle_x0, rectangle_y0, rectangle_x1, rectangle_y1],
+                                outline="black", width=width)
+
+            def calendar_has_event_for_this_day(dt):
+                for e in self.family_calendar_events:
+                    if (dt.year == e.start.year and
+                            dt.month == e.start.month and
+                            dt.day == e.start.day):
+                        return True
+                return None
+
+            if calendar_has_event_for_this_day(dt):
+                x = rectangle_x0 + 5
+                y = rectangle_y0 + 51
+                self.draw.rectangle([x, y, x + 4, y + 4],
+                                    width=width, fill='black')
+
+            self.move_cursor(font_offset_y)
+            self.add_text_to_image(weekday + ", " + day_in_month, font_size, x=font_offset_x+j*60)
+            self.add_text_to_image(w[j].temp_high_low, font_size, x=font_offset_x+j*60)
+            self.add_text_to_image(s[j] + " " + w[j].precipitation, font_size, x=font_offset_x+j*60)
             self.cursor = c
 
-        self.cursor = c + height
+        self.move_cursor(rectangle_height)
 
     def add_weather(self):
         current_conditions, rain_graph = _yr.get_current_weather_image()
@@ -150,22 +189,21 @@ class ImageGenerator():
             self.move_cursor_to_previous_position()
             self.add_text_to_image(s.times, 17, x=240)
 
-
     def generate_image(self):
-        separator = 5
+        separator = 3
 
         self.move_cursor(separator)
 
         self.add_date_and_time()
         self.move_cursor(separator)
 
-        self.add_week()
+        self.add_line()
         self.move_cursor(separator)
 
         self.add_sunrise_sunset()
         self.move_cursor(separator)
 
-        self.add_line()
+        self.add_week()
         self.move_cursor(separator)
 
         self.add_calendar_events()
