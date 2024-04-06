@@ -1,6 +1,7 @@
 from capture_website import capture_screenshot, capture_text, capture_pdf
 from _waveshare import save_image_to_disk, image_contrast
 import re
+import datetime
 
 
 def get_current_weather_image():
@@ -36,12 +37,13 @@ def get_long_forecast_text():
     pattern = re.compile(
         r'([A-Za-z]+ \d+ [A-Za-z]+)\.\s*'  # Date
         r'Maximum minimum temperature:\s*'
-        r'(\d+°/\d+°)\s*'  # Temperature high/low
+        r'(-?\d+°/-?\d+°)\s*'  # Temperature high/low, supports negative
         r'(?:Precipitation\s*'
-        r'(\d+\.\d+mm)\s*)?'  # Precipitation
+        r'(\d+\.\d+mm|\d+mm)\s*)?'  # Adjusted to also match integer mm values for Precipitation
         r'Wind:\s*'
-        r'(\d+)\s*m/s'  # Wind
-    , re.MULTILINE)
+        r'(\d+)\s*m/s',  # Wind
+        re.MULTILINE
+    )
 
     matches = pattern.findall(text)
 
@@ -60,6 +62,21 @@ def get_long_forecast_text():
         element.precipitation = precipitation
         element.wind = wind
         ret.append(element)
+
+        # for attr in dir(element):
+        #     if not attr.startswith('__'):
+        #         print(f"{attr}: {getattr(element, attr)}")
+
+    # sanity check:
+    for j in range(10):
+        dt = datetime.datetime.now() + datetime.timedelta(days=j)
+        if j == 0:
+            s = "Today " + dt.strftime("%-d %b")
+        else:
+            s = dt.strftime("%A %-d %b")
+
+        assert s == ret[j].date, s + " != " + ret[j].date
+
     return ret
 
 

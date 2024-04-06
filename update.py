@@ -11,6 +11,7 @@ import _sl
 import ephem
 from personal_data import family_calendar
 from random import sample
+import water_temperature
 
 
 class ImageGenerator():
@@ -28,13 +29,14 @@ class ImageGenerator():
     def move_cursor_to_previous_position(self):
         self.cursor, self.previous_cursor = self.previous_cursor, self.cursor
 
-    def add_text_to_image(self, text, size, x=None, y=None, line_spacing=1.1):
+    def add_text_to_image(self, text, size=16, x=None, y=None, line_spacing=1.1):
         f = ImageFont.truetype(_waveshare.FONT, size)
         width, _ = self.draw.textsize(text, font=f)
 
         if x is None:
             # horizontally centered
             x = (_waveshare.DIMENSIONS[0] - width) // 2
+            x += 3
         if y is None:
             y = self.cursor
 
@@ -58,40 +60,40 @@ class ImageGenerator():
         # its actually the time + 1 minute because we start the process early
         self.add_text_to_image(current_time, 150, line_spacing=1.0)
 
-    def get_sunset_diff(self):
-        current_date = datetime.datetime.now().strftime('%Y-%m-%d')
-        yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-        stockholm = ephem.city('Stockholm')
-        sunset = ephem.localtime(stockholm.next_setting(ephem.Sun(), current_date))
-        sunset_yesterday = ephem.localtime(stockholm.next_setting(ephem.Sun(), yesterday))
-        sunset_yesterday = sunset_yesterday + datetime.timedelta(days=1)
-        sunset_diff = abs(sunset - sunset_yesterday)
+    def add_water_temperature_sunrise_sunset(self):
+        temp = water_temperature.get()
 
-        if sunset_yesterday < sunset:
-            sign = "+"
-        else:
-            sign = "-"
+        def get_sunset_diff():
+            current_date = datetime.datetime.now().strftime('%Y-%m-%d')
+            yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+            stockholm = ephem.city('Stockholm')
+            sunset = ephem.localtime(stockholm.next_setting(ephem.Sun(), current_date))
+            sunset_yesterday = ephem.localtime(stockholm.next_setting(ephem.Sun(), yesterday))
+            sunset_yesterday = sunset_yesterday + datetime.timedelta(days=1)
+            sunset_diff = abs(sunset - sunset_yesterday)
 
-        return sign + (datetime.datetime(1970, 1, 1) + sunset_diff).strftime('%-M\' %S"')
+            if sunset_yesterday < sunset:
+                sign = "+"
+            else:
+                sign = "-"
 
-    def add_sunrise_sunset(self):
+            return sign + (datetime.datetime(1970, 1, 1) + sunset_diff).strftime('%-M\' %S"')
+
         current_date = datetime.datetime.now().strftime('%Y-%m-%d')
         stockholm = ephem.city('Stockholm')
         sunrise = ephem.localtime(stockholm.next_rising(ephem.Sun(), current_date))
         sunset = ephem.localtime(stockholm.next_setting(ephem.Sun(), current_date))
         sunrise = sunrise.strftime('%-H:%M')
         sunset = sunset.strftime('%-H:%M')
+        diff = get_sunset_diff()
 
-        self.add_text_to_image("Sunrise: " + sunrise, 17, x=10)
-        self.move_cursor_to_previous_position()
-        self.add_text_to_image("Sunset: " + sunset + " (" +
-                               self.get_sunset_diff() + ")", 17, x=240)
+        self.add_text_to_image(f"Water: {temp}, Sunrise: {sunrise}, Sunset: {sunset} ({diff})")
 
     def add_calendar_events(self):
         for e in self.family_calendar_events[0:4]:
-            self.add_text_to_image(e.name, 17, x=240)
+            self.add_text_to_image(e.name, x=240)
             self.move_cursor_to_previous_position()
-            self.add_text_to_image(_calendar.convert(e.start) + ":", 17, x=10)
+            self.add_text_to_image(_calendar.convert(e.start) + ":", x=10)
 
     def add_week(self):
         rectangle_height = 60
@@ -185,12 +187,12 @@ class ImageGenerator():
             show.extend(sample(data, add_elements))
 
         for s in show:
-            self.add_text_to_image(f"{s.destination[:15]} ({s.number}):", 17, x=10)
+            self.add_text_to_image(f"{s.destination[:16]} ({s.number}):", x=10)
             self.move_cursor_to_previous_position()
-            self.add_text_to_image(s.times, 17, x=240)
+            self.add_text_to_image(s.times, x=240)
 
     def generate_image(self):
-        separator = 3
+        separator = 4
 
         self.move_cursor(separator)
 
@@ -200,7 +202,7 @@ class ImageGenerator():
         self.add_line()
         self.move_cursor(separator)
 
-        self.add_sunrise_sunset()
+        self.add_water_temperature_sunrise_sunset()
         self.move_cursor(separator)
 
         self.add_week()

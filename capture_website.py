@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from io import BytesIO
 from PIL import Image
 import requests
-from pdf2image import convert_from_path, convert_from_bytes
+from pdf2image import convert_from_bytes
 
 
 def capture_screenshot(url, size="1920x1080", wait=10, press_coordinates=None):
