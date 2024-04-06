@@ -9,7 +9,7 @@ import _calendar
 import _yr
 import _sl
 import ephem
-from personal_data import family_calendar
+from personal_data import family_calendar, anne_calendar
 from random import sample
 import water_temperature
 
@@ -106,7 +106,7 @@ class ImageGenerator():
         w = _yr.get_long_forecast_text()
         i = _yr.get_long_forecast_icons()
         c = self.cursor
-        s = _calendar.shifts()
+        s = _calendar.shifts(anne_calendar)
 
         for j in range(8):
             dt = datetime.datetime.now() + datetime.timedelta(days=j)

@@ -2,12 +2,11 @@ import requests
 from icalendar import Calendar
 from urllib.parse import urlparse
 from datetime import datetime, date, timedelta
-from personal_data import family_calendar, anne_calendar
 from pytz import timezone
 from dateutil.rrule import rrulestr
 
 
-def get_events(url=None):
+def get_events(url=None, threshold=None, bunch_reoccuring=True):
     url_parts = urlparse(url)
     if url_parts.scheme == "webcal":
         http_url = f"https://{url_parts.netloc}{url_parts.path}"
@@ -21,7 +20,10 @@ def get_events(url=None):
 
     tz = timezone('Europe/Stockholm')
     
-    current_time = datetime.now(tz)
+    if threshold is None:
+        threshold = datetime.now(tz)
+    else:
+        threshold = threshold.replace(tzinfo=tz)
 
     ret = list()
     
@@ -42,32 +44,46 @@ def get_events(url=None):
 
         if 'RRULE' in event:
             # reoccuring event
-            rule = rrulestr(event['RRULE'].to_ical().decode('utf-8'), dtstart=event_start)
-            occurrences = rule.after(current_time)
-            if occurrences is not None:
-                e = lambda: None
-                e.name = event.get('summary')
-                e.name = e.name[0].capitalize() + e.name[1:]
-                e.start = occurrences.replace(tzinfo=None)
-                e.end = (occurrences + (event_end - event_start)).replace(tzinfo=None)
+            if bunch_reoccuring:
+                rule = rrulestr(event['RRULE'].to_ical().decode('utf-8'), dtstart=event_start)
+                occurrences = rule.after(threshold)
+                if occurrences is not None:
+                    e = lambda: None
+                    e.name = event.get('summary')
+                    e.start = occurrences.replace(tzinfo=None)
+                    e.end = (occurrences + (event_end - event_start)).replace(tzinfo=None)
 
-                counter = -1
-                while occurrences is not None and counter <= 100:
-                    counter += 1
-                    occurrences = rule.after(occurrences)
+                    counter = -1
+                    while occurrences is not None and counter <= 99:
+                        counter += 1
+                        occurrences = rule.after(occurrences)
 
-                e.name += " (+" + str(counter) + ")"
+                    e.name += " (+" + str(counter) + ")"
 
-                ret.append(e)
+                    ret.append(e)
+            else:
+                rule = rrulestr(event['RRULE'].to_ical().decode('utf-8'), dtstart=event_start)
+                occurrences = rule.after(threshold)
+                if occurrences is not None:
+                    counter = -1
+                    while occurrences is not None and counter <= 99:
+                        e = lambda: None
+                        e.name = event.get('summary')
+                        e.start = occurrences.replace(tzinfo=None)
+                        e.end = (occurrences + (event_end - event_start)).replace(tzinfo=None)
+
+                        counter += 1
+                        occurrences = rule.after(occurrences)
+
+                        ret.append(e)
         else:
             # single event
-            threshold = min(event_start.replace(hour=23, minute=59), event_end)
-            threshold = threshold.replace(tzinfo=None)
+            t = min(event_start.replace(hour=23, minute=59), event_end)
+            t = t.replace(tzinfo=None)
 
-            if current_time.replace(tzinfo=None) < threshold:
+            if threshold.replace(tzinfo=None) < t:
                 e = lambda: None
                 e.name = event.get('summary')
-                e.name = e.name[0].capitalize() + e.name[1:]
                 e.start = event_start.replace(tzinfo=None)
                 e.end = event_end.replace(tzinfo=None)
                 ret.append(e)
@@ -109,7 +125,7 @@ def convert(target_date):
     return ret
 
 
-def shifts(nof_days=8):
+def shifts(url, nof_days=8):
     current_date = datetime.now()
     list_dates = []
     list_dates.append(current_date.replace(hour=0, minute=0, second=0, microsecond=0))
@@ -117,7 +133,7 @@ def shifts(nof_days=8):
         current_date += timedelta(days=1)
         list_dates.append(current_date.replace(hour=0, minute=0, second=0, microsecond=0))
 
-    events = get_events(anne_calendar)
+    events = get_events(url)
     list_shifts = list()
     for d in list_dates:
         for j in events:
@@ -139,8 +155,10 @@ def print_events(events):
 
 
 if __name__ == "__main__":
+    from personal_data import family_calendar, anne_calendar
+
     print_events(get_events(family_calendar))
     print("")
     print_events(get_events(anne_calendar))
     print("")
-    print(shifts())
+    print(shifts(anne_calendar))
