@@ -145,7 +145,7 @@ class ImageGenerator():
 
             self.move_cursor(font_offset_y)
             self.add_text_to_image(weekday + ", " + day_in_month, font_size, x=font_offset_x+j*60)
-            self.add_text_to_image(w[j].temp_high_low, font_size, x=font_offset_x+j*60)
+            self.add_text_to_image(w[j].temp_high_low[:6], font_size, x=font_offset_x+j*60)
             self.add_text_to_image(s[j] + " " + w[j].precipitation, font_size, x=font_offset_x+j*60)
             self.cursor = c
 

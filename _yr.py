@@ -48,35 +48,33 @@ def get_long_forecast_text():
     matches = pattern.findall(text)
 
     ret = list()
-    for match in matches:
-        element = lambda: None
-        date, temp_high_low, precipitation, wind = match
-        if not precipitation:
-            precipitation = "0mm"
-        element.date = date
-        element.temp_high_low = temp_high_low
-
-        precipitation = precipitation.removesuffix("mm")
-        precipitation = str(round(float(precipitation)))
-
-        element.precipitation = precipitation
-        element.wind = wind
-        ret.append(element)
-
-        # for attr in dir(element):
-        #     if not attr.startswith('__'):
-        #         print(f"{attr}: {getattr(element, attr)}")
-
-    # sanity check:
     for j in range(10):
         dt = datetime.datetime.now() + datetime.timedelta(days=j)
-        if j == 0:
-            s = "Today " + dt.strftime("%-d %b")
+        dt_s = dt.strftime("%d %b")
+        dates = [" ".join(m[0].split()[1:3]) for m in matches]
+        element = lambda: None
+        if dt_s in dates:
+            index = dates.index(dt_s)
+
+            date, temp_high_low, precipitation, wind = matches[index]
+
+            element = lambda: None
+            if not precipitation:
+                precipitation = "0mm"
+            element.date = date
+            element.temp_high_low = temp_high_low
+
+            precipitation = precipitation.removesuffix("mm")
+            precipitation = str(round(float(precipitation)))
+
+            element.precipitation = precipitation
+            element.wind = wind
         else:
-            s = dt.strftime("%A %-d %b")
-
-        assert s == ret[j].date, s + " != " + ret[j].date
-
+            element.date = ""
+            element.precipitation = ""
+            element.temp_high_low = ""
+            element.wind = ""
+        ret.append(element)
     return ret
 
 
