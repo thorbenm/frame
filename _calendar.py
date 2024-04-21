@@ -4,9 +4,12 @@ from urllib.parse import urlparse
 from datetime import datetime, date, timedelta
 from pytz import timezone
 from dateutil.rrule import rrulestr
+import json
+import hashlib
+import os
 
 
-def get_events(url=None, threshold=None, bunch_reoccuring=True):
+def __force_get_events(url=None, threshold=None, bunch_reoccuring=True):
     url_parts = urlparse(url)
     if url_parts.scheme == "webcal":
         http_url = f"https://{url_parts.netloc}{url_parts.path}"
@@ -152,6 +155,44 @@ def print_events(events):
         start = convert(e.start)
         padding = " " * (max_start_length - len(start))
         print(start + ":" + padding + " " + e.name)
+
+
+def save_events_to_disk(events, filename):
+    data = [
+        {attr: (getattr(lmbda, attr).isoformat() if isinstance(getattr(lmbda, attr), datetime) else getattr(lmbda, attr))
+         for attr in dir(lmbda) if not attr.startswith('__')} for lmbda in events
+    ]
+    with open(filename, 'w') as f:
+        json.dump(data, f)
+
+
+def read_events_from_disk(filename):
+    with open(filename, 'r') as f:
+        data = json.load(f)
+    events = []
+    for item in data:
+        o = lambda: None
+        for k, v in item.items():
+            try:
+                setattr(o, k, datetime.fromisoformat(v))
+            except (TypeError, ValueError):
+                setattr(o, k, v)
+        events.append(o)
+    return events
+
+
+def get_events(url, threshold=None, bunch_reoccuring=True, refresh_interval_minutes=10):
+    hash_value = hashlib.md5(url.encode()).hexdigest()[:8]
+    filename = f'/tmp/calendar_buffer_{hash_value}.json'
+
+    if os.path.exists(filename):
+        last_modified = datetime.fromtimestamp(os.path.getmtime(filename))
+        if datetime.now() - last_modified < timedelta(minutes=refresh_interval_minutes):
+            return read_events_from_disk(filename)
+
+    events = __force_get_events(url, threshold, bunch_reoccuring)
+    save_events_to_disk(events, filename)
+    return events
 
 
 if __name__ == "__main__":
