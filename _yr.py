@@ -35,13 +35,13 @@ def get_long_forecast_text():
     text = capture_text("https://www.yr.no/en/forecast/daily-table/2-2670879/Sweden/Stockholm/Sundbyberg%20Municipality/Sundbyberg")
 
     pattern = re.compile(
-        r'([A-Za-z]+ \d+ [A-Za-z]+)\.\s*'  # Date
+        r'([A-Za-z]+ \d+ [A-Za-z]+)\.?\s*'
         r'Maximum minimum temperature:\s*'
-        r'(-?\d+°/-?\d+°)\s*'  # Temperature high/low, supports negative
+        r'(-?\d+°/-?\d+°)\s*'
         r'(?:Precipitation\s*'
-        r'(\d+\.\d+mm|\d+mm)\s*)?'  # Adjusted to also match integer mm values for Precipitation
+        r'(\d+\.\d+mm|\d+mm)\s*)?'
         r'Wind:\s*'
-        r'(\d+)\s*m/s',  # Wind
+        r'(\d+)\s*m/s',
         re.MULTILINE
     )
 
@@ -50,7 +50,7 @@ def get_long_forecast_text():
     ret = list()
     for j in range(10):
         dt = datetime.datetime.now() + datetime.timedelta(days=j)
-        dt_s = dt.strftime("%d %b")
+        dt_s = dt.strftime("%-d %b")
         dates = [" ".join(m[0].split()[1:3]) for m in matches]
         element = lambda: None
         if dt_s in dates:
