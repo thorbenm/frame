@@ -1,11 +1,16 @@
 import requests
+import re
+
 
 def get():
-    t = requests.get("https://sv.seatemperature.net/current/sweden/stockholm-stockholm-sweden").text
-    match_before = "temp1\'><h3>"
-    match_after = "<span id="
-    temp = t[t.find(match_before):t.find(match_after)][len(match_before):]
-    return temp + "°C"
+    url = "https://www.allabadplatser.se/a/stockholms-lan/stockholm/malaren-smedsuddsbadet-v/1411/"
+    response = requests.get(url)
+    if response.status_code == 200:
+        content = response.text
+        match = re.search(r'temperatur via satellit var <strong>([\d,]+°C)</strong> upp', content)
+        if match:
+            return match.group(1).replace(",", ".")
+    return None
 
 
 if __name__ == "__main__":
