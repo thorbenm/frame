@@ -47,14 +47,19 @@ def get_long_forecast_text():
 
     matches = pattern.findall(text)
 
+    match_dates = list()
+    for m in matches:
+        day = m[0].split()[1]
+        month = m[0].split()[2][:3]
+        match_dates.append(f"{day} {month}")
+
     ret = list()
     for j in range(10):
         dt = datetime.datetime.now() + datetime.timedelta(days=j)
         dt_s = dt.strftime("%-d %b")
-        dates = [" ".join(m[0].split()[1:3]) for m in matches]
         element = lambda: None
-        if dt_s in dates:
-            index = dates.index(dt_s)
+        if dt_s in match_dates:
+            index = match_dates.index(dt_s)
 
             date, temp_high_low, precipitation, wind = matches[index]
 
