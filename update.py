@@ -20,7 +20,6 @@ class ImageGenerator():
         self.draw = ImageDraw.Draw(self.image)
         self.cursor = 0
         self.previous_cursor = 0
-        self.family_calendar_events = _calendar.get_events(family_calendar)
 
     def move_cursor(self, movement):
         self.previous_cursor = self.cursor
@@ -90,8 +89,12 @@ class ImageGenerator():
         self.add_text_to_image(f"Water: {temp}, Sunrise: {sunrise}, Sunset: {sunset} ({diff})")
 
     def add_calendar_events(self):
-        for e in self.family_calendar_events[0:4]:
-            self.add_text_to_image(e.name, x=240)
+        for e in _calendar.get_events(family_calendar)[0:4]:
+            name = e.name
+            if 23 < len(name):
+                name = name[:21] + "..."
+            name = " ".join([j.capitalize() for j in name.split()])
+            self.add_text_to_image(name, x=240)
             self.move_cursor_to_previous_position()
             self.add_text_to_image(_calendar.convert(e.start) + ":", x=10)
 
@@ -130,7 +133,7 @@ class ImageGenerator():
                                 outline="black", width=width)
 
             def calendar_has_event_for_this_day(dt):
-                for e in self.family_calendar_events:
+                for e in _calendar.get_events(family_calendar):
                     if (dt.year == e.start.year and
                             dt.month == e.start.month and
                             dt.day == e.start.day):
