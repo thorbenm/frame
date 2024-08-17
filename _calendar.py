@@ -3,7 +3,7 @@ from icalendar import Calendar
 from urllib.parse import urlparse
 from datetime import datetime, date, timedelta
 from pytz import timezone
-from dateutil.rrule import rrulestr
+from dateutil.rrule import rrulestr, rruleset
 import json
 import hashlib
 import os
@@ -29,7 +29,8 @@ def __force_get_events(url=None, threshold=None, bunch_reoccuring=True):
         threshold = threshold.replace(tzinfo=tz)
 
     ret = list()
-    
+    recurrence_map = {}
+
     for event in cal.walk('VEVENT'):
         event_start = event.get('dtstart').dt
     
@@ -45,40 +46,48 @@ def __force_get_events(url=None, threshold=None, bunch_reoccuring=True):
         elif isinstance(event_end, date):
             event_end = datetime.combine(event_end, datetime.min.time(), tz)
 
+        exdates = []
+        if 'EXDATE' in event:
+            exdate_field = event.get('EXDATE')
+            if not isinstance(exdate_field, list):
+                exdate_field = [exdate_field]
+            for exdate in exdate_field:
+                for ex in exdate.dts:
+                    exdates.append(ex.dt.replace(tzinfo=tz))
+
+        uid = event.get('UID')
+        summary = event.get('SUMMARY')
+
         if 'RRULE' in event:
-            # reoccuring event
-            if bunch_reoccuring:
-                rule = rrulestr(event['RRULE'].to_ical().decode('utf-8'), dtstart=event_start)
-                occurrences = rule.after(threshold)
-                if occurrences is not None:
-                    e = lambda: None
-                    e.name = event.get('summary')
-                    e.start = occurrences.replace(tzinfo=None)
-                    e.end = (occurrences + (event_end - event_start)).replace(tzinfo=None)
+            rule = rrulestr(event['RRULE'].to_ical().decode('utf-8'), dtstart=event_start)
+            rrule_set = rruleset()
+            rrule_set.rrule(rule)
+            for exdate in exdates:
+                rrule_set.exdate(exdate)
 
-                    counter = -1
-                    while occurrences is not None and counter <= 99:
-                        counter += 1
-                        occurrences = rule.after(occurrences)
-
-                    e.name += " (+" + str(counter) + ")"
-
-                    ret.append(e)
+            if uid not in recurrence_map:
+                recurrence_map[uid] = {
+                    "rrule_set": rrule_set,
+                    "summary": summary,
+                    "start": event_start,
+                    "end": event_end,
+                }
             else:
-                rule = rrulestr(event['RRULE'].to_ical().decode('utf-8'), dtstart=event_start)
-                occurrences = rule.after(threshold)
-                if occurrences is not None:
-                    counter = -1
-                    while occurrences is not None and counter <= 99:
-                        e = lambda: None
-                        e.name = event.get('summary')
-                        e.start = occurrences.replace(tzinfo=None)
-                        e.end = (occurrences + (event_end - event_start)).replace(tzinfo=None)
+                recurrence_map[uid]["rrule_set"].rrule(rule)
+                for exdate in exdates:
+                    recurrence_map[uid]["rrule_set"].exdate(exdate)
 
-                        counter += 1
-                        occurrences = rule.after(occurrences)
+        elif 'RECURRENCE-ID' in event:
+            recurrence_instance = event.get('RECURRENCE-ID').dt.replace(tzinfo=tz)
+            if uid in recurrence_map:
+                rrule_set = recurrence_map[uid]["rrule_set"]
+                rrule_set.exdate(recurrence_instance)
 
-                        ret.append(e)
+                e = lambda: None
+                e.name = summary
+                e.start = event_start.replace(tzinfo=None)
+                e.end = event_end.replace(tzinfo=None)
+                ret.append(e)
         else:
             # single event
             t = min(event_start.replace(hour=23, minute=59), event_end)
@@ -86,10 +95,47 @@ def __force_get_events(url=None, threshold=None, bunch_reoccuring=True):
 
             if threshold.replace(tzinfo=None) < t:
                 e = lambda: None
-                e.name = event.get('summary')
+                e.name = summary
                 e.start = event_start.replace(tzinfo=None)
                 e.end = event_end.replace(tzinfo=None)
                 ret.append(e)
+
+    for uid, value in recurrence_map.items():
+        rrule_set = value["rrule_set"]
+        summary = value["summary"]
+        event_start = value["start"]
+        event_end = value["end"]
+
+        if bunch_reoccuring:
+            occurrences = rrule_set.after(threshold)
+            if occurrences is not None:
+                e = lambda: None
+                e.name = summary
+                e.start = occurrences.replace(tzinfo=None)
+                e.end = (occurrences + (event_end - event_start)).replace(tzinfo=None)
+
+                counter = -1
+                while occurrences is not None and counter <= 99:
+                    counter += 1
+                    occurrences = rrule_set.after(occurrences)
+
+                e.name += " (+" + str(counter) + ")"
+
+                ret.append(e)
+        else:
+            occurrences = rrule_set.after(threshold)
+            if occurrences is not None:
+                counter = -1
+                while occurrences is not None and counter <= 99:
+                    e = lambda: None
+                    e.name = summary
+                    e.start = occurrences.replace(tzinfo=None)
+                    e.end = (occurrences + (event_end - event_start)).replace(tzinfo=None)
+
+                    counter += 1
+                    occurrences = rrule_set.after(occurrences)
+
+                    ret.append(e)
 
     ret = sorted(ret, key=lambda x: x.start)
 
