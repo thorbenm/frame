@@ -5,7 +5,7 @@ import datetime
 
 
 def get_current_weather_image():
-    full = capture_screenshot("https://www.yr.no/en/forecast/daily-table/2-2670879/Sweden/Stockholm/Sundbyberg%20Municipality/Sundbyberg")
+    full = capture_screenshot("https://www.yr.no/en/forecast/daily-table/2-10376682/Sweden/Stockholm/Stockholm Municipality/Spånga")
     save_image_to_disk(full, "yr_full")
 
     current_conditions = full.crop((330, 267, full.width - 1000, full.height - 757))
@@ -21,7 +21,7 @@ def get_current_weather_image():
 
 
 def get_short_forecast_image():
-    full = capture_screenshot("https://www.yr.no/en/forecast/graph/2-2670879/Sweden/Stockholm/Sundbyberg%20Municipality/Sundbyberg", size="495x1100")
+    full = capture_screenshot("https://www.yr.no/en/forecast/graph/2-10376682/Sweden/Stockholm/Stockholm Municipality/Spånga", size="495x1100")
     save_image_to_disk(full, "yr_full2")
 
     forecast = full.crop((0, 361, 480, 528))
@@ -32,7 +32,7 @@ def get_short_forecast_image():
 
 
 def get_long_forecast_text():
-    text = capture_text("https://www.yr.no/en/forecast/daily-table/2-2670879/Sweden/Stockholm/Sundbyberg%20Municipality/Sundbyberg")
+    text = capture_text("https://www.yr.no/en/forecast/daily-table/2-10376682/Sweden/Stockholm/Stockholm Municipality/Spånga")
 
     pattern = re.compile(
         r'([A-Za-z]+ \d+ [A-Za-z]+)\.?\s*'
@@ -84,7 +84,7 @@ def get_long_forecast_text():
 
 
 def get_long_forecast_icons():
-    full = capture_pdf("https://www.yr.no/en/print/forecast/2-2670879/Sweden/Stockholm/Sundbyberg%20Municipality/Sundbyberg")
+    full = capture_pdf("https://www.yr.no/en/print/forecast/2-10376682/Sweden/Stockholm/Stockholm Municipality/Spånga")
     full = full.convert("L")
     save_image_to_disk(full, "long_forecast_full")
     offset_x = 632

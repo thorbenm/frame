@@ -5,16 +5,19 @@ from io import BytesIO
 from PIL import Image
 import requests
 from pdf2image import convert_from_bytes
+import time
 
 
-def capture_screenshot(url, size="1920x1080", wait=10, press_coordinates=None):
+def capture_screenshot(url, size="1920x1080", sleep=-1.0, press_coordinates=None):
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument(f"--window-size={size}")
     driver = webdriver.Chrome(options=chrome_options)
     driver.get(url)
-    driver.implicitly_wait(wait)
+    driver.implicitly_wait(10)
+    if 0.0 < sleep:
+        time.sleep(sleep)
 
     if press_coordinates is not None:
         action = webdriver.common.action_chains.ActionChains(driver)
@@ -29,14 +32,16 @@ def capture_screenshot(url, size="1920x1080", wait=10, press_coordinates=None):
     return greyscale
 
 
-def capture_text(url, size="1920x1080", wait=10):
+def capture_text(url, size="1920x1080", sleep=-1.0):
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument(f"--window-size={size}")
     driver = webdriver.Chrome(options=chrome_options)
     driver.get(url)
-    driver.implicitly_wait(wait)
+    driver.implicitly_wait(10)
+    if 0.0 < sleep:
+        time.sleep(sleep)
 
     body_text = driver.find_element(By.TAG_NAME, "body").text
 

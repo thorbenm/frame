@@ -13,7 +13,7 @@ def subtract_one_minute(string):
 
 
 def get_data():
-    text = capture_website.capture_text("https://sl.se/?mode=departures&origName=Sundbybergs+station+%28Sundbyberg%29&origSiteId=9325&origPlaceId=QT0xQE89U3VuZGJ5YmVyZ3Mgc3RhdGlvbiAoU3VuZGJ5YmVyZylAWD0xNzk3MTQ5NUBZPTU5MzYwODcwQFU9NzRATD0zMDIxMDkzMjVAQj0xQA%3D%3D")
+    text = capture_website.capture_text("https://sl.se/?mode=departures&departuresSiteId=9704&name=Sp%C3%A5nga%20station%20(Stockholm)", sleep=3.0)
 
     pattern = r"^.*\slinje\s(\d+[A-Za-z]?)\smot\s(.*)\.\sNästa\savgång:\s(.*),\sfrån\s"
 
