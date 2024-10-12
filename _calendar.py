@@ -168,9 +168,6 @@ def convert(target_date):
     if time != "0:00":
         ret += ", " + time 
 
-    if 22 < len(ret):
-        ret = ret[:-3]
-
     return ret
 
 
