@@ -93,7 +93,7 @@ class ImageGenerator():
             name = e.name
             if 23 < len(name):
                 name = name[:21] + "..."
-            name = " ".join([j.capitalize() for j in name.split()])
+            name = " ".join([j[0].upper() + j[1:] for j in name.split()])
             self.add_text_to_image(name, x=240)
             self.move_cursor_to_previous_position()
             self.add_text_to_image(_calendar.convert(e.start) + ":", x=10)
