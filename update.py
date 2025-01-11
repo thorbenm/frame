@@ -92,12 +92,14 @@ class ImageGenerator():
     def add_calendar_events(self):
         for e in _calendar.get_events(family_calendar)[0:4]:
             name = e.name
-            if 23 < len(name):
-                name = name[:21] + "..."
-            name = " ".join([j[0].upper() + j[1:] for j in name.split()])
-            self.add_text_to_image(name, x=240)
-            self.move_cursor_to_previous_position()
-            self.add_text_to_image(_calendar.convert(e.start) + ":", x=10)
+            if not name.startswith("-"):
+                if 23 < len(name):
+                    name = name[:21] + "..."
+                name = " ".join([j[0].upper() + j[1:] for j in name.split()])
+                self.add_text_to_image(name, x=240)
+                self.move_cursor_to_previous_position()
+                self.add_text_to_image(_calendar.convert(e.start) + ":", x=10)
+                self.nof_calendar_events += 1
 
     def add_week(self):
         rectangle_height = 60
