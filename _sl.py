@@ -12,10 +12,13 @@ def subtract_one_minute(string):
     return string
 
 
-def get_data():
+def get_data(print_all_text=False):
     text = capture_website.capture_text("https://sl.se/?mode=station-pages-tab&departuresSiteId=9704&name=Sp%C3%A5nga%20station%20(Stockholm)", sleep=3.0)
 
-    pattern = r"^.*\slinje\s(\d+[A-Za-z]?)\smot\s(.*)\.\sNästa\savgång:\s(.*),\sfrån\s"
+    if print_all_text:
+        print(text)
+
+    pattern = r"^(?:Buss|Pendeltåg) Linje (.*?) Mot (.*?)\. Avgångstid (.*?)\. (?:Läge|Spår).*"
 
     matches = list()
     for line in text.strip().split("\n"):
@@ -47,5 +50,9 @@ def get_data():
 
 
 if __name__ == "__main__":
-    for d in get_data():
+    data = get_data(print_all_text=True)
+    print()
+    print()
+    print()
+    for d in data:
         print(d.destination, d.number, d.times)
