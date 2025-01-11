@@ -191,7 +191,7 @@ class ImageGenerator():
             show.extend(sample(data, add_elements))
 
         for s in show:
-            self.add_text_to_image(f"{s.destination[:16]} ({s.number}):", x=10)
+            self.add_text_to_image(f"{s.destination[:18]} ({s.number}):", x=10)
             self.move_cursor_to_previous_position()
             self.add_text_to_image(s.times, x=240)
 
