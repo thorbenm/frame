@@ -20,6 +20,7 @@ class ImageGenerator():
         self.draw = ImageDraw.Draw(self.image)
         self.cursor = 0
         self.previous_cursor = 0
+        self.nof_calendar_events = 0
 
     def move_cursor(self, movement):
         self.previous_cursor = self.cursor
@@ -180,7 +181,7 @@ class ImageGenerator():
 
         data = list(filter(lambda x: x not in show, data))
 
-        total_number_of_elements = 6
+        total_number_of_elements = 10 - self.nof_calendar_events
         add_elements = total_number_of_elements - len(show)
         if len(data) <= add_elements:
             show.extend(data)
@@ -212,8 +213,9 @@ class ImageGenerator():
         self.add_calendar_events()
         self.move_cursor(separator)
 
-        self.add_line()
-        self.move_cursor(separator)
+        if self.nof_calendar_events != 0:
+            self.add_line()
+            self.move_cursor(separator)
 
         self.add_weather()
         self.move_cursor(separator)
