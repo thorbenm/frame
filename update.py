@@ -2,16 +2,20 @@ from PIL import Image, ImageDraw, ImageFont
 import time
 import datetime
 import _waveshare
-import numpy as np
 import traceback
 from timeout_decorator import timeout
 import _calendar
 import _yr
 import _sl
 import ephem
-from personal_data import family_calendar, anne_calendar
 from random import sample
 import water_temperature
+from personal_data import (
+    family_calendar,
+    anne_work_calendar,
+    thorben_personal_calendar,
+    anne_personal_calendar
+)
 
 
 class ImageGenerator():
@@ -90,9 +94,24 @@ class ImageGenerator():
         self.add_text_to_image(f"Water: {temp}, Sunrise: {sunrise}, Sunset: {sunset} ({diff})")
 
     def add_calendar_events(self):
-        for e in _calendar.get_events(family_calendar)[0:4]:
+        max_events = 4
+
+        family_events = _calendar.get_events(family_calendar)[0:max_events]
+        anne_events = _calendar.get_events(anne_personal_calendar)[0:max_events]
+        thorben_events = _calendar.get_events(thorben_personal_calendar)[0:max_events]
+
+        for e in thorben_events:
+            e.name = "Thorben: " + e.name
+        for e in anne_events:
+            e.name = "Anne: " + e.name
+
+        events = family_events + anne_events + thorben_events
+        events.sort(key=lambda x: x.start)
+        events = events[0:max_events]
+
+        for e in events:
             name = e.name
-            if not name.startswith("-"):
+            if not name.endswith(" -h"):
                 if 23 < len(name):
                     name = name[:21] + "..."
                 name = " ".join([j[0].upper() + j[1:] for j in name.split()])
@@ -112,7 +131,7 @@ class ImageGenerator():
         w = _yr.get_long_forecast_text()
         i = _yr.get_long_forecast_icons()
         c = self.cursor
-        s = _calendar.shifts(anne_calendar)
+        s = _calendar.shifts(anne_work_calendar)
 
         for j in range(8):
             dt = datetime.datetime.now() + datetime.timedelta(days=j)
@@ -179,7 +198,7 @@ class ImageGenerator():
         kallhall = "Kallhäll"
 
         show.extend(list(filter(lambda x: x.number in ["43", "43X", "44", "44X"] and not x.destination in [balsta, kungsangen, kallhall], data)))
-        show.extend(list(filter(lambda x: x.destination == "Kista centrum", data)))
+        show.extend(list(filter(lambda x: x.number == "179" and x.destination == "Sollentuna station", data)))
 
         data = list(filter(lambda x: x not in show, data))
 
@@ -187,7 +206,7 @@ class ImageGenerator():
         add_elements = total_number_of_elements - len(show)
         if len(data) <= add_elements:
             show.extend(data)
-        else:
+        elif 0 < add_elements:
             show.extend(sample(data, add_elements))
 
         for s in show:
