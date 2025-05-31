@@ -13,7 +13,7 @@ def subtract_one_minute(string):
 
 
 def get_data(print_all_text=False):
-    text = capture_website.capture_text("https://sl.se/?stationPlaceId=9091001000009704&stationName=Sp%C3%A5nga+%28Stockholm%29&mode=station-pages-tab", sleep=3.0)
+    text = capture_website.capture_text("https://sl.se/?stationPlaceId=9091001000009325&stationName=Sundbyberg+%28Sundbyberg%29&mode=station-pages-tab", sleep=3.0)
 
     if print_all_text:
         print(text)

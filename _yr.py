@@ -32,7 +32,7 @@ def get_short_forecast_image():
 
 
 def get_long_forecast_text():
-    text = capture_text("https://www.yr.no/en/forecast/daily-table/2-10376682/Sweden/Stockholm/Stockholm Municipality/Spånga")
+    text = capture_text("https://www.yr.no/en/forecast/daily-table/2-2670879/Sweden/Stockholm/Sundbyberg%20Municipality/Sundbyberg")
 
     pattern = re.compile(
         r'([A-Za-z]+ \d+ [A-Za-z]+)\.?\s*'

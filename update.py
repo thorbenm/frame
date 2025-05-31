@@ -193,12 +193,13 @@ class ImageGenerator():
         data = _sl.get_data()
         show = list()
 
+        kungstradgarden = "Kungsträdgården"
         balsta = "Bålsta"
         kungsangen = "Kungsängen"
         kallhall = "Kallhäll"
 
+        show.extend(list(filter(lambda x: x.destination == kungstradgarden, data)))
         show.extend(list(filter(lambda x: x.number in ["43", "43X", "44", "44X"] and not x.destination in [balsta, kungsangen, kallhall], data)))
-        show.extend(list(filter(lambda x: x.number == "179" and x.destination == "Sollentuna station", data)))
 
         data = list(filter(lambda x: x not in show, data))
 
