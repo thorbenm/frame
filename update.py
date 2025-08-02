@@ -203,7 +203,7 @@ class ImageGenerator():
 
         data = list(filter(lambda x: x not in show, data))
 
-        total_number_of_elements = 10 - self.nof_calendar_events
+        total_number_of_elements = 9 - self.nof_calendar_events
         add_elements = total_number_of_elements - len(show)
         if len(data) <= add_elements:
             show.extend(data)
@@ -216,7 +216,7 @@ class ImageGenerator():
             self.add_text_to_image(s.times, x=240)
 
     def generate_image(self):
-        separator = 4
+        separator = 3
 
         self.move_cursor(separator)
 

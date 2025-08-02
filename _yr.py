@@ -27,7 +27,7 @@ def get_short_forecast_image():
     full = capture_screenshot("https://www.yr.no/en/forecast/graph/" + LOCATION, size="495x1100")
     save_image_to_disk(full, "yr_full2")
 
-    forecast = full.crop((0, 361, 480, 528))
+    forecast = full.crop((0, 361, 480, 552))
     forecast = image_contrast(forecast, 180.0, 245.0)
     save_image_to_disk(forecast, "yr_forecast")
 
